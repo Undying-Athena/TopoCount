@@ -1,0 +1,12 @@
+epoch= 0 
+epoch= 0 
+epoch= 0 
+epoch: 0  train batch i: 0 loss_dice= 0.9399005174636841 loss_pers= 0 count_err 14557.0
+epoch: 0  train batch i: 1 loss_dice= 0.9474174380302429 loss_pers= 0 count_err 6355.0
+epoch: 0  train epoch_loss_dice 0.9436589777469635 epoch_loss_pers 0.0 mae 713239.671875 rmse 691498882649.0 rmse*2+mae 1382998478537.6719 
+epoch: 0  train batch i: 0 loss_dice= 0.9465569257736206 count_err 19781.0
+epoch= 0 
+epoch: 0  train batch i: 0 loss_dice= 0.9435973167419434 loss_pers= 0 count_err -164.0
+epoch: 0  train batch i: 1 loss_dice= 0.9522568583488464 loss_pers= 0 count_err -226.0
+epoch: 0  train epoch_loss_dice 0.9479270875453949 epoch_loss_pers 0.0 mae 5839341.25 rmse 34506283194442.0 rmse*2+mae 69012572228225.25 
+epoch: 0  train batch i: 0 loss_dice= 0.9579315185546875 count_err -51.0

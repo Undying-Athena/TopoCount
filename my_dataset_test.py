@@ -63,7 +63,7 @@ class CrowdDataset(Dataset):
         else:
             gtdot_path = os.path.join(self.gt_dot_root,img_name.replace('.jpg','.npy'));
             if(os.path.isfile(gtdot_path)):
-                gt_dot=np.load(gtdot_path)
+                gt_dot=np.load(gtdot_path, allow_pickle=True)
             else:
                 gt_dot=np.zeros((img.shape[0], img.shape[1]))
 

@@ -14,7 +14,8 @@ import sys;
 import math
 import skimage.io as io
 from scipy import ndimage
-from scipy.misc import imresize
+# from scipy.misc import imresize
+import cv2
 from skimage.measure import label
 from skimage import filters
 
@@ -59,6 +60,31 @@ The configurations include:
 
 
 if __name__=="__main__":
+    ####################################################################################
+    ## Configuration for agriculture
+    ####################################################################################
+
+    model_param_path = None; 
+    #model_param_path = './checkpoints/sh_partb_custom_topo1_patch50/epoch_4.pth';      
+    checkpoints_save_path = './checkpoints/agriculture_cpt';
+
+    root = './datasets/agriculture/'
+    train_image_root = os.path.join(root,'train_data','images','img') 
+    train_dmap_root = os.path.join(root,'train_data','gt_map_custom2')
+    train_dots_root = os.path.join(root,'train_data','ground-truth_dots')
+    train_split_txt_filepath = None
+    test_image_root = os.path.join(root,'train_data','images','img')
+    test_dmap_root = os.path.join(root,'train_data','gt_map_custom2')
+    test_dots_root = os.path.join(root,'train_data','ground-truth_dots')
+    test_split_txt_filepath = None
+
+    topo_size = 500; # tiling patch size for persistence loss
+    start_epoch = 0 # start epoch numbering. useful if stop and continue in same directory
+    lamda_pers = 1; # weight for persistence loss
+    lamda_dice = 1; # weight for dice loss
+    epoch_start_pers_loss = 3 # default epoch to start adding persistence loss. Idealy chosen manually when the model starts to output reasonable predictions from which topology can be inferred
+    train_patch_size = -1 # size of image patch to use to train. -1 means whole image. otherwise random crops of size train_patch_size x train_patch_size are used
+    test_patch_size = -1 # size of image patch to use to test. -1 means whole image. otherwise random crops of size test_patch_size x test_patch_size are used. If get cuda error, change to 1024 and then run a separate evaluation on the trained epochs to select optimized model.
 
     # Below are some default configurations for the datasets: ShanghaTech Part A, ShanghaTech Part B, UCF-QNRF, JHU++, NWPU-Crowd.
     # Uncomment the approporiate configuration
@@ -92,29 +118,28 @@ if __name__=="__main__":
     ####################################################################################
     ## Configuration for ShanghaiTech Part B
     ####################################################################################
-    #'''
-    model_param_path = None; 
-    #model_param_path = './checkpoints/sh_partb_custom_topo1_patch50/epoch_4.pth';      
-    checkpoints_save_path = './checkpoints/sh_partb_custom_topo1_patch50';
 
-    root = './datasets/ShanghaiTech/'
-    train_image_root = os.path.join(root,'part_B/train_data','images') 
-    train_dmap_root = os.path.join(root,'part_B/train_data','gt_map_custom2')
-    train_dots_root = os.path.join(root,'part_B/train_data','ground-truth_dots')
-    train_split_txt_filepath = None
-    test_image_root = os.path.join(root,'part_B/test_data','images') 
-    test_dmap_root = os.path.join(root,'part_B/test_data','gt_map_custom2')
-    test_dots_root = os.path.join(root,'part_B/test_data','ground-truth_dots')
-    test_split_txt_filepath = None
+    # model_param_path = None; 
+    # #model_param_path = './checkpoints/sh_partb_custom_topo1_patch50/epoch_4.pth';      
+    # checkpoints_save_path = './checkpoints/sh_partb_custom_topo1_patch50';
 
-    topo_size         = 50; # tiling patch size for persistence loss
-    start_epoch = 0         # start epoch numbering. useful if stop and continue in same directory
-    lamda_pers            = 1; # weight for persistence loss
-    lamda_dice            = 1; # weight for dice loss
-    epoch_start_pers_loss = 3 # default epoch to start adding persistence loss. Idealy chosen manually when the model starts to output reasonable predictions from which topology can be inferred
-    train_patch_size = -1 # size of image patch to use to train. -1 means whole image. otherwise random crops of size train_patch_size x train_patch_size are used
-    test_patch_size = -1 # size of image patch to use to test. -1 means whole image. otherwise random crops of size test_patch_size x test_patch_size are used. If get cuda error, change to 1024 and then run a separate evaluation on the trained epochs to select optimized model.
-    #'''
+    # root = './datasets/ShanghaiTech/'
+    # train_image_root = os.path.join(root,'part_B/train_data','images') 
+    # train_dmap_root = os.path.join(root,'part_B/train_data','gt_map_custom2')
+    # train_dots_root = os.path.join(root,'part_B/train_data','ground-truth_dots')
+    # train_split_txt_filepath = None
+    # test_image_root = os.path.join(root,'part_B/test_data','images') 
+    # test_dmap_root = os.path.join(root,'part_B/test_data','gt_map_custom2')
+    # test_dots_root = os.path.join(root,'part_B/test_data','ground-truth_dots')
+    # test_split_txt_filepath = None
+
+    # topo_size         = 50; # tiling patch size for persistence loss
+    # start_epoch = 0         # start epoch numbering. useful if stop and continue in same directory
+    # lamda_pers            = 1; # weight for persistence loss
+    # lamda_dice            = 1; # weight for dice loss
+    # epoch_start_pers_loss = 3 # default epoch to start adding persistence loss. Idealy chosen manually when the model starts to output reasonable predictions from which topology can be inferred
+    # train_patch_size = -1 # size of image patch to use to train. -1 means whole image. otherwise random crops of size train_patch_size x train_patch_size are used
+    # test_patch_size = -1 # size of image patch to use to test. -1 means whole image. otherwise random crops of size test_patch_size x test_patch_size are used. If get cuda error, change to 1024 and then run a separate evaluation on the trained epochs to select optimized model.
 
     ####################################################################################
     ## Configuration for UCF-QNRF
@@ -216,9 +241,9 @@ if __name__=="__main__":
     
     sub_patch_border_width = 5
     padwidth = 3;
-    mm=1
-    thresh_low=0.4
-    thresh_high=0.5
+    mm = 1
+    thresh_low = 0.4
+    thresh_high = 0.5
 
     device=torch.device(gpu_or_cpu)
     torch.cuda.manual_seed(seed)
@@ -322,10 +347,12 @@ if __name__=="__main__":
                         if(len(likelihood.shape) < 2 or len(groundtruth.shape) < 2 ):
                             continue;
                         if(topo_size >= 100):
-                            likelihood_2 = imresize(likelihood, (likelihood.shape[0]//2, likelihood.shape[1]//2)) 
+                            # likelihood_2 = imresize(likelihood, (likelihood.shape[0]//2, likelihood.shape[1]//2)) 
+                            likelihood_2 = cv2.resize(likelihood, (likelihood.shape[0]//2, likelihood.shape[1]//2)) 
                             if(likelihood_2.max() > 0):
                                 likelihood_2 = likelihood_2/likelihood_2.max()*likelihood.max()
-                            groundtruth_2 = imresize(groundtruth, (groundtruth.shape[0]//2, groundtruth.shape[1]//2))
+                            # groundtruth_2 = imresize(groundtruth, (groundtruth.shape[0]//2, groundtruth.shape[1]//2))
+                            groundtruth_2 = cv2.resize(groundtruth, (groundtruth.shape[0]//2, groundtruth.shape[1]//2))
                             if(groundtruth_2.max() > 0):
                                 groundtruth_2 = groundtruth_2/groundtruth_2.max()*groundtruth.max()
                             pd_lh, bcp_lh, dcp_lh = compute_persistence_2DImg_1DHom_lh(-likelihood_2*mm, padwidth = padwidth, homo_dim=0)
@@ -621,27 +648,3 @@ if __name__=="__main__":
 
 
     sys.stdout.flush();
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    

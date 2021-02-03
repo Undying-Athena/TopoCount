@@ -1,0 +1,15 @@
+modelname topocount_best 
+modelname topocount_best 
+image IMG_5.jpg e_count 77 g_count 82.0 err -5.0 
+image IMG_6.jpg e_count 198 g_count 195.0 err 3.0 
+model-name topocount_best mae 4.0 rmse 4.123105625617661 2rmse+mae 12.246211251235321 pos_err 3.0 neg_err 5.0 
+modelname topocount_best 
+modelname topocount_best 
+image IMG_5.jpg e_count 77 g_count 82.0 err -5.0 
+image IMG_6.jpg e_count 198 g_count 195.0 err 3.0 
+model-name topocount_best mae 4.0 rmse 4.123105625617661 2rmse+mae 12.246211251235321 pos_err 3.0 neg_err 5.0 
+modelname topocount_best 
+image IMG_5.jpg e_count 77 g_count 82.0 err -5.0 
+image IMG_6.jpg e_count 198 g_count 195.0 err 3.0 
+model-name topocount_best mae 4.0 rmse 4.123105625617661 2rmse+mae 12.246211251235321 pos_err 3.0 neg_err 5.0 
+modelname topocount_best 

@@ -63,7 +63,7 @@ def run_eval_model(model_param_path, test_loader, out_dir, log_file, thresh_low=
     model=UnetVggCC(kwargs={'dropout_keep_prob':dropout_keep_prob, 'initial_pad':initial_pad, 'interpolate':interpolate, 'conv_init':conv_init, 'n_classes':n_classes, 'n_channels':n_channels})
     model.to(device)
     criterion_sig = nn.Sigmoid() # initialize sigmoid layer
-    model.load_state_dict(torch.load(model_param_path), strict=True);
+    model.load_state_dict(torch.load(model_param_path, map_location=device), strict=True);
     model.to(device)
 
     mae = 0
@@ -400,6 +400,18 @@ def run_eval_model(model_param_path, test_loader, out_dir, log_file, thresh_low=
 
 if __name__=="__main__":
 
+    #####################################################################################
+    ### Configuration for algriculture
+    #####################################################################################
+    models_root_dir = './pretrained_models'
+    model_filename = 'topocount_sh_partb.pth'
+    out_dir = './eval/agriculture_topocount_test'
+    out_filename = 'out.txt'
+    root = './datasets/agriculture/'
+    test_image_root = os.path.join(root,'train_data','images', 'ori_image') 
+    test_dots_root = os.path.join(root,'train_data','ground-truth_dots')   
+    test_split_txt_filepath = None
+
     # Below are some default configurations for the datasets: ShanghaTech Part A, ShanghaTech Part B, UCF-QNRF, JHU++, NWPU-Crowd.
     # Uncomment the approporiate configuration
     ####################################################################################
@@ -418,17 +430,17 @@ if __name__=="__main__":
     #####################################################################################
     ### Configuration for ShanghaiTech Part B - Test
     #####################################################################################
-    '''
-    models_root_dir = './pretrained_models'
-    model_filename = 'topocount_sh_partb.pth'
-    out_dir = './eval/parta_custom_topo1_patch50_e48_test'
-    out_dir = './eval/sh_partb_custom_topo1_patch50_topocount_test'
-    out_filename = 'out.txt'
-    root = './datasets/ShanghaiTech/'
-    test_image_root = os.path.join(root,'part_B/test_data','images') 
-    test_dots_root = os.path.join(root,'part_B/test_data','ground-truth_dots')   
-    test_split_txt_filepath = None
-    '''
+    
+    # models_root_dir = './pretrained_models'
+    # model_filename = 'topocount_sh_partb.pth'
+    # out_dir = './eval/parta_custom_topo1_patch50_e48_test'
+    # out_dir = './eval/sh_partb_custom_topo1_patch50_topocount_test'
+    # out_filename = 'out.txt'
+    # root = './datasets/ShanghaiTech/'
+    # test_image_root = os.path.join(root,'part_B/test_data','images') 
+    # test_dots_root = os.path.join(root,'part_B/test_data','ground-truth_dots')   
+    # test_split_txt_filepath = None
+    
     #####################################################################################
     ### Configuration for UCF-QNRF - Test
     #####################################################################################
@@ -491,7 +503,7 @@ if __name__=="__main__":
     #####################################################################################
     ### Configuration for NWPU-Crowd - Test
     #####################################################################################
-    #'''
+    '''
     models_root_dir = './pretrained_models'
     model_filename = 'topocount_nwpu.pth'
     #out_dir = './eval/nwpu_custom_topo1_patch100_e48_test'
@@ -501,7 +513,7 @@ if __name__=="__main__":
     test_image_root = os.path.join(root,'images')
     test_dots_root = os.path.join(root,'ground-truth_dots') 
     test_split_txt_filepath = os.path.join(root,'test.txt')    
-    #'''
+    '''
 
     ####################################################################################
 
