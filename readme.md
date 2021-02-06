@@ -1,4 +1,9 @@
 # TopoCount (Localization in the Crowd with Topological Constraints) #
+# 
+1. 執行 ```bash install.sh``` (需打入密碼)
+2. ```python3 2_train.py```
+#
+
 
 [**Shahira Abousamra, Minh Hoai, Dimitris Samaras, Chao Chen, Localization in the Crowd with Topological Constraints, AAAI 2021.**](https://arxiv.org/pdf/2012.12482.pdf)
 
