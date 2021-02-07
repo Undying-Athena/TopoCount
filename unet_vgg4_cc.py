@@ -171,15 +171,27 @@ class UnetVggCC(nn.Module):
         #print('self.bottleneck',self.bottleneck)
         print('self.decoder',self.decoder)
 
+        # Split to multiple gpus
+        self.encoder.cuda(0)
+        self.bottleneck.cuda(0)
+        self.decoder.cuda(1)
+        self.final_layer.cuda(1)
+
     def forward(self,x):
 
         encoder_out = [];
         encoder_out = [];
+
+        x.cuda(0)
+
         for l in self.encoder:     
             x = l(x);
             encoder_out.append(x);
         x = self.bottleneck(x);
         j = len(self.decoder);
+        
+        x.cuda(1)
+
         for l in self.decoder:            
             x = l[0](x);
             j -= 1;

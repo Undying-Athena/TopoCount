@@ -251,7 +251,7 @@ if __name__=="__main__":
     if(not (model_param_path is None)):
         model.load_state_dict(torch.load(model_param_path), strict=False);
         print('model loaded')
-    model.to(device)
+    # model.to(device)
     criterion_sig = nn.Sigmoid() # initialize sigmoid layer
     criterion_bce = nn.BCEWithLogitsLoss() # initialize loss function
     optimizer=torch.optim.Adam(model.parameters(),lr) 
@@ -299,10 +299,12 @@ if __name__=="__main__":
         mae=0;
         rmse=0
         for i,(img,gt_dmap, gt_dots) in enumerate(tqdm(train_loader)):
-            img=img.to(device)
+            # img=img.to(device)
+            img=img.cuda(0)
             gt_dmap = gt_dmap > 0
             gt_dmap = gt_dmap.type(torch.FloatTensor)
-            gt_dmap=gt_dmap.to(device)
+            # gt_dmap=gt_dmap.to(device)
+            gt_dmap=gt_dmap.cuda(1)
             # forward propagation        
             et_dmap=model(img)[:,:,2:-2,2:-2]
             print('et_dmap.min()', et_dmap.min())
@@ -446,8 +448,10 @@ if __name__=="__main__":
                                     topo_cp_weight_map[0,0,y+int(dcp_gt[hole_indx][0]), x+int(dcp_gt[hole_indx][1])] = 1; # push death to 1 i.e. max death prob or likelihood
                                     topo_cp_weight_map_vis_d_gt[0,0,y+int(dcp_gt[hole_indx][0]), x+int(dcp_gt[hole_indx][1])] = 1; # push death to 1 i.e. max death prob or likelihood
                                     topo_cp_ref_map[0,0,y+int(dcp_gt[hole_indx][0]), x+int(dcp_gt[hole_indx][1])] = groundtruth[int(dcp_gt[hole_indx][0]), int(dcp_gt[hole_indx][1])]; 
-                topo_cp_weight_map = torch.tensor(topo_cp_weight_map, dtype=torch.float).to(device)
-                topo_cp_ref_map = torch.tensor(topo_cp_ref_map, dtype=torch.float).to(device)
+                # topo_cp_weight_map = torch.tensor(topo_cp_weight_map, dtype=torch.float).to(device)
+                # topo_cp_ref_map = torch.tensor(topo_cp_ref_map, dtype=torch.float).to(device)
+                topo_cp_weight_map = torch.tensor(topo_cp_weight_map, dtype=torch.float).cuda(1)
+                topo_cp_ref_map = torch.tensor(topo_cp_ref_map, dtype=torch.float).cuda(1)
 
                 print('topo_cp_ref_map.sum()',topo_cp_ref_map.sum())
                 intersection = (et_sig * topo_cp_ref_map*topo_cp_weight_map).sum()
@@ -544,10 +548,12 @@ if __name__=="__main__":
         for i,(img,gt_dmap, gt_dots) in enumerate(tqdm(test_loader)):
             if(test_patch_size > 0 and i > 5): # because test_patch_size > 0 need to run a separate test to evaluate models on val/test data to find optimized model, so do not need to run on all val/test data, a sample to visualize is enough.
                 break;
-            img=img.to(device)
+            # img=img.to(device)
+            img=img.cuda(0)
             gt_dmap = gt_dmap > 0
             gt_dmap = gt_dmap.type(torch.FloatTensor)
-            gt_dmap=gt_dmap.to(device)
+            # gt_dmap=gt_dmap.to(device)
+            gt_dmap=gt_dmap.cuda(1)
             # forward propagation
             et_dmap=model(img)[:,:,2:-2,2:-2]
             et_sig = criterion_sig(et_dmap.squeeze(dim=1))
