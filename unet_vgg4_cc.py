@@ -182,7 +182,7 @@ class UnetVggCC(nn.Module):
         encoder_out = [];
         encoder_out = [];
 
-        x.cuda(0)
+        x = x.cuda(0)
 
         for l in self.encoder:     
             x = l(x);
@@ -190,7 +190,7 @@ class UnetVggCC(nn.Module):
         x = self.bottleneck(x);
         j = len(self.decoder);
         
-        x.cuda(1)
+        x = x.cuda(1)
 
         for l in self.decoder:            
             x = l[0](x);
