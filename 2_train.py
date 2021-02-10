@@ -2,6 +2,7 @@
 #matplotlib.use('Agg')
 #import matplotlib.pyplot as plt
 #import matplotlib.cm as CM
+import gc
 
 import numpy as np
 import time
@@ -78,7 +79,7 @@ if __name__=="__main__":
     test_dots_root = os.path.join(root,'train_data','ground-truth_dots')
     test_split_txt_filepath = None
 
-    topo_size = 500; # tiling patch size for persistence loss
+    topo_size = 100; # tiling patch size for persistence loss
     start_epoch = 0 # start epoch numbering. useful if stop and continue in same directory
     lamda_pers = 1; # weight for persistence loss
     lamda_dice = 1; # weight for dice loss
@@ -225,7 +226,7 @@ if __name__=="__main__":
     ###################################################################################
 
     gt_multiplier = 1    
-    gpu_or_cpu='cuda' # use cuda or cpu
+#     gpu_or_cpu='cuda:0' # use cuda or cpu
     lr                = 0.00005 
     batch_size        = 1
     #momentum          = 0.95
@@ -245,13 +246,16 @@ if __name__=="__main__":
     thresh_low = 0.4
     thresh_high = 0.5
 
-    device=torch.device(gpu_or_cpu)
+#     device=torch.device(gpu_or_cpu)
     torch.cuda.manual_seed(seed)
+    torch.cuda.empty_cache()
+    gc.collect()
+   
     model=UnetVggCC(kwargs={'dropout_keep_prob':dropout_keep_prob, 'initial_pad':initial_pad, 'interpolate':interpolate, 'conv_init':conv_init, 'n_classes':n_classes, 'n_channels':n_channels})
     if(not (model_param_path is None)):
         model.load_state_dict(torch.load(model_param_path), strict=False);
         print('model loaded')
-    # model.to(device)
+#     model.to(device)
     criterion_sig = nn.Sigmoid() # initialize sigmoid layer
     criterion_bce = nn.BCEWithLogitsLoss() # initialize loss function
     optimizer=torch.optim.Adam(model.parameters(),lr) 
@@ -285,6 +289,8 @@ if __name__=="__main__":
     test_mae_list=[]
     test_rmse_list=[]
     test_rmse_mae_list=[]
+    
+    model = model.half()
     for epoch in range(start_epoch,epochs):
         # training phase
         model.train()
@@ -298,18 +304,21 @@ if __name__=="__main__":
         epoch_loss_pers=0
         mae=0;
         rmse=0
-        for i,(img,gt_dmap, gt_dots) in enumerate(tqdm(train_loader)):
-            # img=img.to(device)
+        for i,(img,gt_dmap, gt_dots) in enumerate(tqdm(train_loader, ascii=True)):
+#             img=img.to(device)
             img=img.cuda(0)
+            img = img.half()
             gt_dmap = gt_dmap > 0
-            gt_dmap = gt_dmap.type(torch.FloatTensor)
-            # gt_dmap=gt_dmap.to(device)
+            gt_dmap = gt_dmap.type(torch.HalfTensor) #gt_dmap = gt_dmap.type(torch.FloatTensor)
+#             gt_dmap=gt_dmap.to(device)
             gt_dmap=gt_dmap.cuda(1)
             # forward propagation        
             et_dmap=model(img)[:,:,2:-2,2:-2]
             print('et_dmap.min()', et_dmap.min())
             print('et_dmap.max()', et_dmap.max())
-
+            
+            break
+            
             loss_pers = torch.tensor(0)
             if(lamda_pers > 0 and epoch >= epoch_start_pers_loss):
                 n_fix = 0
@@ -448,8 +457,8 @@ if __name__=="__main__":
                                     topo_cp_weight_map[0,0,y+int(dcp_gt[hole_indx][0]), x+int(dcp_gt[hole_indx][1])] = 1; # push death to 1 i.e. max death prob or likelihood
                                     topo_cp_weight_map_vis_d_gt[0,0,y+int(dcp_gt[hole_indx][0]), x+int(dcp_gt[hole_indx][1])] = 1; # push death to 1 i.e. max death prob or likelihood
                                     topo_cp_ref_map[0,0,y+int(dcp_gt[hole_indx][0]), x+int(dcp_gt[hole_indx][1])] = groundtruth[int(dcp_gt[hole_indx][0]), int(dcp_gt[hole_indx][1])]; 
-                # topo_cp_weight_map = torch.tensor(topo_cp_weight_map, dtype=torch.float).to(device)
-                # topo_cp_ref_map = torch.tensor(topo_cp_ref_map, dtype=torch.float).to(device)
+#                 topo_cp_weight_map = torch.tensor(topo_cp_weight_map, dtype=torch.float).to(device)
+#                 topo_cp_ref_map = torch.tensor(topo_cp_ref_map, dtype=torch.float).to(device)
                 topo_cp_weight_map = torch.tensor(topo_cp_weight_map, dtype=torch.float).cuda(1)
                 topo_cp_ref_map = torch.tensor(topo_cp_ref_map, dtype=torch.float).cuda(1)
 
@@ -545,14 +554,15 @@ if __name__=="__main__":
         mae=0;
         rmse=0
         loss_val = 0
-        for i,(img,gt_dmap, gt_dots) in enumerate(tqdm(test_loader)):
+        for i,(img,gt_dmap, gt_dots) in enumerate(tqdm(test_loader, ascii=True)):
             if(test_patch_size > 0 and i > 5): # because test_patch_size > 0 need to run a separate test to evaluate models on val/test data to find optimized model, so do not need to run on all val/test data, a sample to visualize is enough.
                 break;
-            # img=img.to(device)
+#             img=img.to(device)
             img=img.cuda(0)
+            img = img.half()
             gt_dmap = gt_dmap > 0
-            gt_dmap = gt_dmap.type(torch.FloatTensor)
-            # gt_dmap=gt_dmap.to(device)
+            gt_dmap = gt_dmap.type(torch.HalfTensor) #gt_dmap = gt_dmap.type(torch.FloatTensor)
+#             gt_dmap=gt_dmap.to(device)
             gt_dmap=gt_dmap.cuda(1)
             # forward propagation
             et_dmap=model(img)[:,:,2:-2,2:-2]
@@ -565,10 +575,10 @@ if __name__=="__main__":
             epoch_loss_dice += loss_dice.item()
 
 
-            if(i <6):
+            if(i<6):
                 io.imsave(os.path.join(checkpoints_save_path, 'test'+ '_indx'+str(i)+'_img'+'.png'), (img.squeeze().detach().cpu().numpy()*255).transpose(1,2,0).astype(np.uint8));
                 io.imsave(os.path.join(checkpoints_save_path, 'test'+ '_indx'+str(i)+'_gt'+'.png'), (gt_dmap.squeeze().detach().cpu().numpy()*255).astype(np.uint8));
-                io.imsave(os.path.join(checkpoints_save_path, 'epoch'+str(epoch)+ '_test'+ '_indx'+str(i)+'_likelihood'+'_loss_'+ "{:.4f}".format(loss_dice.item()) + '_err'+str(err)+'.png'), (criterion_sig(et_dmap).squeeze().detach().cpu().numpy()*255).astype(np.uint8));
+#                 io.imsave(os.path.join(checkpoints_save_path, 'epoch'+str(epoch)+ '_test'+ '_indx'+str(i)+'_likelihood'+'_loss_'+ "{:.4f}".format(loss_dice.item()) + '_err'+str(err)+'.png'), (criterion_sig(et_dmap).squeeze().detach().cpu().numpy()*255).astype(np.uint8));
 
             e_hard = filters.apply_hysteresis_threshold(et_sig.detach().cpu().numpy().squeeze(), thresh_low, thresh_high)
             e_hard2 = (e_hard > 0).astype(np.uint8)

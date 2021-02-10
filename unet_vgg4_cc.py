@@ -172,25 +172,28 @@ class UnetVggCC(nn.Module):
         print('self.decoder',self.decoder)
 
         # Split to multiple gpus
+        
         self.encoder.cuda(0)
-        self.bottleneck.cuda(0)
-        self.decoder.cuda(1)
+        self.bottleneck.cuda(1)
+        self.decoder.cuda(0)
         self.final_layer.cuda(1)
+        
 
     def forward(self,x):
 
         encoder_out = [];
         encoder_out = [];
 
-        x.cuda(0)
+        x = x.cuda(0)
 
         for l in self.encoder:     
             x = l(x);
             encoder_out.append(x);
-        x = self.bottleneck(x);
-        j = len(self.decoder);
         
-        x.cuda(1)
+        x = x.cuda(1)
+        x = self.bottleneck(x);
+        x = x.cuda(0)
+        j = len(self.decoder);
 
         for l in self.decoder:            
             x = l[0](x);
@@ -202,6 +205,8 @@ class UnetVggCC(nn.Module):
                 x = torch.cat((cropped, x), 1) ;
             for i in range(1, len(l)):
                 x = l[i](x);
+
+        x = x.cuda(1)
 
         c = self.final_layer(x);
 
